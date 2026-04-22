@@ -1,0 +1,105 @@
+Human Design API — Commercial License Agreement
+
+Copyright (C) 2026 Dogan Turkuler <dogan.turkuler@gmail.com>
+DevAIble Engineering Studio — https://devaible.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPORTANT: This is a Master License Agreement. A binding 
+commercial license is only granted after the selection of 
+a tier, payment of applicable fees, and/or a signed Order Form.
+Contact dogan.turkuler@gmail.com to obtain a license.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. GRANT OF LICENSE
+
+   Subject to the terms of this Agreement and payment of applicable
+   fees, Licensor grants Licensee a non-exclusive, non-transferable,
+   worldwide license to:
+
+   a) Use, copy, and modify the Software for internal purposes
+   b) Deploy the Software as part of a commercial product or service
+   c) Offer the Software as a hosted API or SaaS without AGPL
+      source disclosure obligations
+
+2. LICENSE TIERS AND USAGE LIMITS
+
+   The Software is offered in multiple tiers (e.g., Startup, Business, 
+   Enterprise). The specific limits for each tier—including but not 
+   limited to API call volume, developer seats, and number of permitted 
+   commercial products—are specified on the Licensor's official website 
+   (https://devaible.com) or in a separate Order Form issued at the 
+   time of purchase.
+
+   a) DEVELOPER SEAT: Defined as a single named individual authorized 
+      to access and integrate the Software into Licensee's products.
+   b) API CALL VOLUME: The maximum number of requests permitted per 
+      calendar month.
+   c) OVERAGES: Use exceeding the tier limits may require an upgrade 
+      to a higher tier or additional usage fees.
+
+3. FEES AND PAYMENT
+
+   Licensee shall pay the fees associated with their selected tier 
+   in accordance with the payment terms specified at the point of 
+   purchase. All fees are non-refundable unless otherwise specified 
+   in writing.
+
+4. RESTRICTIONS
+
+   Licensee may NOT:
+   a) Sublicense, resell, or transfer the license to third parties
+      without written consent from Licensor
+   b) Use the Software to build a competing API marketplace product
+   c) Remove or alter copyright notices or this license text
+   d) Claim ownership of the original Software
+
+5. ATTRIBUTION
+
+   Licensee must include the following notice in their product
+   documentation or about page:
+
+   "Powered by Human Design API by DevAIble (devaible.com)"
+
+   Enterprise licensees or those with a specific waiver may remove 
+   this attribution as specified in their tier benefits.
+
+6. INTELLECTUAL PROPERTY
+
+   The Software and all copies remain the exclusive property of
+   Dogan Turkuler / DevAIble. This license does not transfer
+   ownership. All rights not expressly granted are reserved.
+
+7. WARRANTY DISCLAIMER
+
+   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
+   LICENSOR SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM USE
+   OF THE SOFTWARE.
+
+8. TERMINATION
+
+   This license terminates automatically if Licensee breaches any
+   term. Upon termination, Licensee must cease all use and destroy
+   all copies.
+
+9. GOVERNING LAW AND DISPUTE RESOLUTION
+
+   This Agreement is governed by the laws of Turkey. Any dispute 
+   arising out of or in connection with this contract, including 
+   any question regarding its existence, validity or termination, 
+   shall be referred to and finally resolved by arbitration in 
+   Istanbul, Turkey.
+
+   Notwithstanding the above, Licensor reserves the right to seek 
+   injunctive relief or other equitable remedies in any court of 
+   competent jurisdiction to protect its Intellectual Property Rights.
+
+10. ENTIRE AGREEMENT
+
+    This Agreement constitutes the entire agreement between the
+    parties regarding the Software and supersedes all prior
+    agreements.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+To purchase a license: dogan.turkuler@gmail.com
+Website: https://devaible.com
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

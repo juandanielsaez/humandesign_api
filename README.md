@@ -29,6 +29,42 @@ Whether you are building a mobile app, a professional dashboard, or a personal r
 *   **Comprehensive Chart Data**: Returns Energy Type, Strategy, Authority, Profile, Incarnation Cross, Variables, Age, Western Zodiac Sign, and full Planetary/Gate positions.
 *   **Network-Independent Tests**: Optimized geocoding bypass to ensure 100% deterministic and fast verification.
 
+## License
+
+This project is dual-licensed:
+
+| Tier | Price | API Access | Credits / mo | Target Feature Set |
+| :--- | :--- | :--- | :--- | :--- |
+| **Hobbyist** | $0 | **V1 Only** | 50 | Legacy Calculations |
+| **Startup** | $49/mo | **V1 + V2** | 20,000 | V2 Flagship + Interpretation |
+| **Business** | $149/mo | **V1 + V2** | 150,000 | **Penta**, **Matrix**, White-Label |
+| **Enterprise** | $499+/mo | **V1 + V2** | Custom | Unlimited Use, SLA, Support |
+
+### Feature Locks & Premium Content
+
+*   **V2 Flagship Engine**: Access to the high-performance V2 POST endpoints (including **Dream Rave**, **Global Cycles**, and **Selective Output Masking**) is restricted to paid tiers.
+*   **Startup Tier**: Unlocks V2 access and the standard 10x Interpretation engine.
+*   **Business Tier (Professional)**: Unlocks professional modules including **Group Penta Analysis**, **Maia-Matrix Relational Analytics**, and the ability to generate **White-Label BodyGraphs** (no watermark).
+*   **Enterprise Tier**: Includes full distribution rights for multiple domains, custom branding, and 99.9% uptime SLA.
+
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE-AGPL)
+[![Commercial License](https://img.shields.io/badge/License-Commercial-green.svg)](mailto:dogan.turkuler@gmail.com)
+
+**Commercial self-hosted licenses start at $1,000/year.**  
+Contact: dogan.turkuler@gmail.com | https://devaible.com
+
+## API Versions: V1 vs V2
+
+| Feature | Legacy V1 | Flagship V2 |
+| :--- | :--- | :--- |
+| **Request Type** | GET (Limited) | POST (Scalable JSON) |
+| **Performance** | Standard | High (Coordinate Bypass) |
+| **Output Control** | Fixed Response | Selective (Include/Exclude) |
+| **Dream Rave** | ❌ No | ✅ Included |
+| **Global Cycles** | ❌ No | ✅ Included |
+| **Semantic Layer** | Basic | ✅ Deep Enrichment |
+| **Variables/PHS** | Partial | ✅ Full Schema Support |
+
 ## Installation and Setup
 
 To get the Human Design API up and running, follow these steps:
@@ -362,6 +398,6 @@ The project is organized as follows:
     *   Tools like `openapi-generator` can use this file to generate API client code for various programming languages (e.g., Python, JavaScript, Java).
 
 ---
-*Documentation generated for Human Design API v3.4.1*
+*Documentation generated for Human Design API v4.0.0*
 
 

@@ -1,3 +1,13 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-DevAIble-Commercial
+#
+# Human Design API
+# Copyright (C) 2026 Dogan Turkuler <dogan.turkuler@gmail.com>
+# https://devaible.com
+#
+# This file is part of Human Design API, available under dual license:
+#   - AGPL-3.0 (open source): see LICENSE-AGPL
+#   - Commercial License: see LICENSE-COMMERCIAL or contact dogan.turkuler@gmail.com
+
 from .. import features as hd
 from .. import hd_constants
 from .date_utils import to_iso_utc, clean_birth_date_to_iso

@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+ 
+## [4.0.0] - 2026-04-22
+### Added
+- **Dual-Licensing Model**: Transitioned to a dual-licensing strategy (AGPL-3.0 for Open Source vs. Commercial for proprietary/hosted use).
+- **Sovereign Knowledge Engine**: Promoted the high-fidelity professional calculation engine as the global standard.
+- **Enhanced Legal Headers**: Unified SPDX license identifiers across the entire codebase.
+- **Advanced Forensic Reliability**: Integrated multi-stage validation for all planetary and mechanical calculations.
+
+### Changed
+- **Major Version Bump**: Shifted to v4.0.0 to signal the structural change in licensing and professional-grade stability.
 
 ## [3.4.1] - 2026-01-23
 ### Added
