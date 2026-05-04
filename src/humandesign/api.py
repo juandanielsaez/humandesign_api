@@ -9,7 +9,7 @@
 #   - Commercial License: see LICENSE-COMMERCIAL or contact dogan.turkuler@gmail.com
 
 from fastapi import FastAPI
-from .routers import general, transits, composite
+from .routers import general, transits, composite, chart
 from .routers.v2 import general as general_v2
 
 # --- Read version from importlib.metadata ---
