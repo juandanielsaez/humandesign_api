@@ -9,7 +9,7 @@
 #   - Commercial License: see LICENSE-COMMERCIAL or contact dogan.turkuler@gmail.com
 
 from fastapi import FastAPI
-from .routers import general, transits, composite, chart
+from .routers import general, transits, composite
 from .routers.v2 import general as general_v2
 
 # --- Read version from importlib.metadata ---
@@ -33,7 +33,6 @@ app.include_router(general.router)
 app.include_router(transits.router)
 app.include_router(composite.router)
 app.include_router(general_v2.router)
-app.include_router(chart.router, prefix="/v2", tags=["Chart"])
 
 if __name__ == "__main__":
     import uvicorn
