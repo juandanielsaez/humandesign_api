@@ -33,6 +33,7 @@ app.include_router(general.router)
 app.include_router(transits.router)
 app.include_router(composite.router)
 app.include_router(general_v2.router)
+app.include_router(chart.router, prefix="/v2", tags=["Chart"])
 
 if __name__ == "__main__":
     import uvicorn
