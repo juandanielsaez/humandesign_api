@@ -322,9 +322,14 @@ def draw_chart(chart_data, layout_data):
                                      linewidth=0, edgecolor='none', facecolor=fill_c, zorder=z_order)
             
             # Add subtle drop shadow to undefined Head center only
-            # Shadow pushed up and right to outline the top edges
+            # Stacked three-layer glow effect for soft UI shadow
             if name == 'Head' and not is_defined:
-                rect.set_path_effects([pe.SimplePatchShadow(offset=(1.5, 2.5), shadow_rgbFace='black', alpha=0.1), pe.Normal()])
+                rect.set_path_effects([
+                    pe.SimplePatchShadow(offset=(0.5, 1.0), shadow_rgbFace='black', alpha=0.03),
+                    pe.SimplePatchShadow(offset=(1.0, 2.0), shadow_rgbFace='black', alpha=0.02),
+                    pe.SimplePatchShadow(offset=(1.5, 3.0), shadow_rgbFace='black', alpha=0.01),
+                    pe.Normal()
+                ])
             
             ax.add_patch(rect)
         elif data['type'] == 'path':
@@ -333,9 +338,14 @@ def draw_chart(chart_data, layout_data):
             patch = patches.PathPatch(path, facecolor=fill_c, edgecolor='none', linewidth=0, zorder=z_order)
             
             # Add subtle drop shadow to undefined Head center only
-            # Shadow pushed up and right to outline the top edges
+            # Stacked three-layer glow effect for soft UI shadow
             if name == 'Head' and not is_defined:
-                patch.set_path_effects([pe.SimplePatchShadow(offset=(1.5, 2.5), shadow_rgbFace='black', alpha=0.1), pe.Normal()])
+                patch.set_path_effects([
+                    pe.SimplePatchShadow(offset=(0.5, 1.0), shadow_rgbFace='black', alpha=0.03),
+                    pe.SimplePatchShadow(offset=(1.0, 2.0), shadow_rgbFace='black', alpha=0.02),
+                    pe.SimplePatchShadow(offset=(1.5, 3.0), shadow_rgbFace='black', alpha=0.01),
+                    pe.Normal()
+                ])
             
             # Apply Transform if present
             transform_str = data.get('transform')
