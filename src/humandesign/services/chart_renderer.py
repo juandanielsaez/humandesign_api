@@ -245,7 +245,7 @@ def draw_chart(chart_data, layout_data):
     
     return fig
 
-def generate_bodygraph_image(chart_data, fmt='png'):
+def generate_bodygraph_image(chart_data, fmt='svg'):
     """
     Generates the BodyGraph image and returns it as whitespace-trimmed bytes.
     fmt: 'png', 'svg', 'jpg', 'jpeg'
