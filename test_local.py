@@ -19,13 +19,13 @@ from humandesign import hd_constants
 # === USER BIRTH DATA ===
 # Replace with your actual birth data:
 # This test date produces a defined Solar Plexus for chart verification
-BIRTH_YEAR = 1990
-BIRTH_MONTH = 2
-BIRTH_DAY = 27
-BIRTH_HOUR = 15
-BIRTH_MINUTE = 25
+BIRTH_YEAR = 1987
+BIRTH_MONTH = 1
+BIRTH_DAY = 9
+BIRTH_HOUR = 10
+BIRTH_MINUTE = 30
 BIRTH_SECOND = 0
-TIMEZONE_STR = 'America/Santiago'  # e.g., 'America/Bogota', 'America/Santiago', 'Europe/Madrid'
+TIMEZONE_STR = 'America/Bogota'  # e.g., 'America/Bogota', 'America/Santiago', 'Europe/Madrid'
 # =======================
 
 # Calculate accurate UTC offset from timezone string using pytz

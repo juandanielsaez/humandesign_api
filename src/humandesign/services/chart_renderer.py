@@ -11,11 +11,20 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.transforms
+import matplotlib.patheffects as pe
+from matplotlib.path import Path
 from svgpath2mpl import parse_path
 import json
 import importlib.resources
+import numpy as np
 
 import io
+
+# Import gate-to-center mapping for conditional text coloring
+from ..features.mechanics import full_dict as mechanics_full_dict
+
+# Build gate-to-center mapping from mechanics
+GATE_TO_CENTER_MAP = mechanics_full_dict.get("full_gate_chakra_dict", {})
 
 # --- 1. CONFIGURATION ---
 LAYOUT_FILE = "layout_data.json"
@@ -67,6 +76,122 @@ def svg_to_mpl_path(svg_d):
         return None
     # svgpath2mpl works great usually.
     return parse_path(svg_d)
+
+
+def get_parallel_offset_path(path, offset_distance):
+    """
+    Creates a parallel offset path by shifting vertices perpendicular to the path direction.
+    
+    For each segment, computes the normal vector and offsets all points (vertices and control points)
+    by the specified distance. Works with Lines (LINETO), Cubic Bezier (CURVE4), and Quadratic Bezier (CURVE3).
+    
+    Args:
+        path: A matplotlib.path.Path object
+        offset_distance: Distance to offset (positive = right side when walking along path)
+    
+    Returns:
+        A new matplotlib.path.Path with offset vertices
+    """
+    if path is None or len(path.vertices) < 2:
+        return path
+    
+    vertices = path.vertices.copy()
+    codes = path.codes.copy() if path.codes is not None else np.full(len(vertices), Path.LINETO)
+    
+    # Ensure first point is MOVETO
+    if len(codes) > 0:
+        codes[0] = Path.MOVETO
+    
+    # Compute offset for each vertex based on the local path direction
+    offset_vertices = vertices.copy()
+    
+    i = 0
+    while i < len(vertices):
+        code = codes[i]
+        
+        if code == Path.MOVETO:
+            # MOVETO: offset based on the direction to the next point
+            if i + 1 < len(vertices):
+                dx = vertices[i + 1, 0] - vertices[i, 0]
+                dy = vertices[i + 1, 1] - vertices[i, 1]
+                length = np.sqrt(dx * dx + dy * dy)
+                if length > 0:
+                    # Perpendicular normal (rotated 90° clockwise for positive offset)
+                    nx = dy / length * offset_distance
+                    ny = -dx / length * offset_distance
+                    offset_vertices[i, 0] = vertices[i, 0] + nx
+                    offset_vertices[i, 1] = vertices[i, 1] + ny
+            i += 1
+            
+        elif code == Path.LINETO:
+            # LINETO: offset based on direction from previous to current
+            if i > 0:
+                dx = vertices[i, 0] - vertices[i - 1, 0]
+                dy = vertices[i, 1] - vertices[i - 1, 1]
+                length = np.sqrt(dx * dx + dy * dy)
+                if length > 0:
+                    nx = dy / length * offset_distance
+                    ny = -dx / length * offset_distance
+                    offset_vertices[i, 0] = vertices[i, 0] + nx
+                    offset_vertices[i, 1] = vertices[i, 1] + ny
+            i += 1
+            
+        elif code == Path.CURVE4:
+            # Cubic Bezier: 3 control points + 1 end point (4 vertices total)
+            if i + 3 < len(vertices):
+                # Get segment start (either MOVETO point or previous segment end)
+                if i > 0:
+                    start_x, start_y = vertices[i - 1]
+                else:
+                    start_x, start_y = vertices[i]
+                
+                # Compute direction from start to end for normal estimation
+                end_x, end_y = vertices[i + 3]
+                dx = end_x - start_x
+                dy = end_y - start_y
+                length = np.sqrt(dx * dx + dy * dy)
+                
+                if length > 0:
+                    nx = dy / length * offset_distance
+                    ny = -dx / length * offset_distance
+                    
+                    # Offset all 4 points of the curve
+                    for j in range(4):
+                        offset_vertices[i + j, 0] = vertices[i + j, 0] + nx
+                        offset_vertices[i + j, 1] = vertices[i + j, 1] + ny
+            i += 4
+            
+        elif code == Path.CURVE3:
+            # Quadratic Bezier: 2 control points + 1 end point (3 vertices total)
+            if i + 2 < len(vertices):
+                # Get segment start
+                if i > 0:
+                    start_x, start_y = vertices[i - 1]
+                else:
+                    start_x, start_y = vertices[i]
+                
+                # Compute direction from start to end
+                end_x, end_y = vertices[i + 2]
+                dx = end_x - start_x
+                dy = end_y - start_y
+                length = np.sqrt(dx * dx + dy * dy)
+                
+                if length > 0:
+                    nx = dy / length * offset_distance
+                    ny = -dx / length * offset_distance
+                    
+                    # Offset all 3 points of the curve
+                    for j in range(3):
+                        offset_vertices[i + j, 0] = vertices[i + j, 0] + nx
+                        offset_vertices[i + j, 1] = vertices[i + j, 1] + ny
+            i += 3
+            
+        else:
+            # For other codes, copy vertex as-is and advance
+            i += 1
+    
+    return Path(offset_vertices, codes)
+
 
 def draw_chart(chart_data, layout_data):
     # Setup Figure conforming to the aspect ratio
@@ -141,14 +266,25 @@ def draw_chart(chart_data, layout_data):
         z_order = 1
         
         if is_design and is_personality:
-            # Draw Red base
-            patch_red = patches.PathPatch(mpl_path, facecolor='none', edgecolor=COLOR_RED, linewidth=5, 
+            # Dual-activation: Flush side-by-side rendering with unit-decoupled offset
+            # line_width is in typographical points (for matplotlib linewidth)
+            # data_offset is in data coordinates (for path transformation)
+            line_width = 2.5  # Half of total 5px width (in points)
+            data_offset = 0.45  # Empirical offset in data units to match visual width
+            
+            # Generate offset paths using data coordinates
+            path_red = get_parallel_offset_path(mpl_path, -data_offset)
+            path_black = get_parallel_offset_path(mpl_path, data_offset)
+            
+            # Draw Design (Red) on the left - identical linewidth and round cap
+            patch_red = patches.PathPatch(path_red, facecolor='none', edgecolor=COLOR_RED, linewidth=line_width,
                                           capstyle='round', joinstyle='round', zorder=z_order)
             ax.add_patch(patch_red)
-            # Draw Black stripe
-            patch_blk = patches.PathPatch(mpl_path, facecolor='none', edgecolor=COLOR_BLACK, linewidth=5, 
-                                          linestyle=(0, (3, 3)), capstyle='round', joinstyle='round', zorder=z_order+0.1)
-            ax.add_patch(patch_blk)
+            
+            # Draw Personality (Black) on the right - identical linewidth and round cap
+            patch_black = patches.PathPatch(path_black, facecolor='none', edgecolor=COLOR_BLACK, linewidth=line_width,
+                                           capstyle='round', joinstyle='round', zorder=z_order + 0.1)
+            ax.add_patch(patch_black)
         elif is_design:
             patch = patches.PathPatch(mpl_path, facecolor='none', edgecolor=COLOR_RED, linewidth=5, 
                                       capstyle='round', joinstyle='round', zorder=z_order)
@@ -184,11 +320,22 @@ def draw_chart(chart_data, layout_data):
             # Premium UI: No borders (linewidth=0)
             rect = patches.Rectangle((data['x'], data['y']), data['w'], data['h'], 
                                      linewidth=0, edgecolor='none', facecolor=fill_c, zorder=z_order)
+            
+            # Add subtle drop shadow to undefined Head center only
+            # Shadow pushed up and right to outline the top edges
+            if name == 'Head' and not is_defined:
+                rect.set_path_effects([pe.SimplePatchShadow(offset=(1.5, 2.5), shadow_rgbFace='black', alpha=0.1), pe.Normal()])
+            
             ax.add_patch(rect)
         elif data['type'] == 'path':
             path = svg_to_mpl_path(data['path'])
             # Premium UI: No borders (linewidth=0)
             patch = patches.PathPatch(path, facecolor=fill_c, edgecolor='none', linewidth=0, zorder=z_order)
+            
+            # Add subtle drop shadow to undefined Head center only
+            # Shadow pushed up and right to outline the top edges
+            if name == 'Head' and not is_defined:
+                patch.set_path_effects([pe.SimplePatchShadow(offset=(1.5, 2.5), shadow_rgbFace='black', alpha=0.1), pe.Normal()])
             
             # Apply Transform if present
             transform_str = data.get('transform')
@@ -233,10 +380,35 @@ def draw_chart(chart_data, layout_data):
             ax.text(circle_x, circle_y, str(gate_id), fontsize=8, fontweight='bold', 
                     ha='center', va='center', zorder=22, color='#000000', fontfamily='sans-serif')
         else:
-            # Inactive: Smaller grey text, no background
+            # Inactive: Conditional text color based on parent center definition
+            # Get parent center for this gate (abbreviation like "AA", "TT", etc.)
+            parent_center_abbr = GATE_TO_CENTER_MAP.get(gate_id)
+            
+            # Map abbreviation to full center name and normalize
+            center_name_mapping = {
+                "HD": "Head",
+                "AA": "Ajna",
+                "TT": "Throat",
+                "GC": "G_Center",
+                "G": "G_Center",
+                "HT": "Heart",
+                "SP": "SolarPlexus",
+                "SN": "Spleen",
+                "SL": "Sacral",
+                "RT": "Root"
+            }
+            parent_center = center_name_mapping.get(parent_center_abbr, parent_center_abbr)
+            
+            # Check if parent center is defined
+            # defined_centers is already normalized in the Prepare Data section
+            is_parent_defined = parent_center in defined_centers
+            
+            # Set text color: white for inactive gates in defined centers, grey for undefined
+            text_color = '#EEEEEE' if is_parent_defined else '#888888'
+            
             # Use same center coordinates for consistency
             ax.text(x + 3, y + 3, str(gate_id), fontsize=7, 
-                    ha='center', va='center', zorder=21, color='#888888', fontfamily='sans-serif')
+                    ha='center', va='center', zorder=21, color=text_color, fontfamily='sans-serif')
 
     # 6. SIDE PANELS (Planets) - Optional but good for completeness
     # Draw simple lists on left/right outside the canvas w/ clipping off? 
