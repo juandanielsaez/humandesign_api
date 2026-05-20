@@ -22,12 +22,25 @@ LAYOUT_FILE = "layout_data.json"
 OUTPUT_FILE = "bodygraph_output.png"
 
 # Colors
-COLOR_DEFINED = "#D4AF37"  # Gold-ish for defined centers
 COLOR_UNDEFINED = "#FFFFFF" # Pure White
 COLOR_STROKE = "black"
 COLOR_RED = "#DC143C"      # Crimson
 COLOR_BLACK = "black"
 COLOR_BODY_BG = "#E6E6E6"  # Darker gray vertical background for better contrast with white centers
+
+# Premium Modern UI Color Palette
+CENTER_COLORS = {
+    "Head": "#FDF1AD",       # Soft Yellow
+    "Ajna": "#719C91",       # Muted Teal
+    "Throat": "#5B4B49",     # Dark Charcoal/Brown
+    "G": "#FDF1AD",          # Soft Yellow (G Center)
+    "G_Center": "#FDF1AD",   # Soft Yellow (alias)
+    "Heart": "#D45656",      # Soft UI Red
+    "Spleen": "#5B4B49",     # Dark Charcoal/Brown
+    "SolarPlexus": "#5B4B49", # Dark Charcoal/Brown
+    "Sacral": "#D45656",     # Soft UI Red
+    "Root": "#5B4B49"        # Dark Charcoal/Brown
+}
 
 # Canvas Size (Matched to XAML ViewBox/Canvas)
 # XAML Canvas is 240x320. 
@@ -71,10 +84,31 @@ def draw_chart(chart_data, layout_data):
 
     # 2. PREPARE DATA
     defined_centers = set(chart_data['general'].get('defined_centers', []))
-    # Handle legacy typo in center names
-    if "Anja" in defined_centers: 
-        defined_centers.remove("Anja")
-        defined_centers.add("Ajna")
+    
+    # Normalize center names to match layout keys
+    # Map various naming conventions to the layout keys in layout_data.json
+    center_name_mapping = {
+        # Handle typos
+        "Anja": "Ajna",
+        # Handle space variations for Solar Plexus
+        "Solar Plexus": "SolarPlexus",
+        # Handle alternative names
+        "Solar_Plexus": "SolarPlexus",
+        "Ego": "Heart",
+        "Plexo": "SolarPlexus",
+        "Emocional": "SolarPlexus",
+        "Spleen": "Spleen",
+        "Splenic": "Spleen",
+        # G-Center mapping (engine outputs "G_Center", layout uses "G")
+        "G_Center": "G",
+    }
+    
+    normalized_centers = set()
+    for center in defined_centers:
+        # Apply mapping if exists, otherwise keep original
+        normalized_name = center_name_mapping.get(center, center)
+        normalized_centers.add(normalized_name)
+    defined_centers = normalized_centers
         
     design_gates = {g['Gate']: g for g in chart_data['gates']['des']['Planets']}
     personality_gates = {g['Gate']: g for g in chart_data['gates']['prs']['Planets']}
@@ -93,7 +127,8 @@ def draw_chart(chart_data, layout_data):
         mpl_path = svg_to_mpl_path(path_d)
         
         # 1. Draw Inactive state (Gray Background)
-        patch_bg = patches.PathPatch(mpl_path, facecolor='none', edgecolor="#D3D3D3", linewidth=4, capstyle='round', zorder=0.5)
+        patch_bg = patches.PathPatch(mpl_path, facecolor='none', edgecolor="#D3D3D3", linewidth=5, 
+                                     capstyle='round', joinstyle='round', zorder=0.5)
         ax.add_patch(patch_bg)
 
         # Check activation
@@ -107,16 +142,20 @@ def draw_chart(chart_data, layout_data):
         
         if is_design and is_personality:
             # Draw Red base
-            patch_red = patches.PathPatch(mpl_path, facecolor='none', edgecolor=COLOR_RED, linewidth=4, capstyle='round', zorder=z_order)
+            patch_red = patches.PathPatch(mpl_path, facecolor='none', edgecolor=COLOR_RED, linewidth=5, 
+                                          capstyle='round', joinstyle='round', zorder=z_order)
             ax.add_patch(patch_red)
             # Draw Black stripe
-            patch_blk = patches.PathPatch(mpl_path, facecolor='none', edgecolor=COLOR_BLACK, linewidth=4, linestyle=(0, (3, 3)), capstyle='round', zorder=z_order+0.1)
+            patch_blk = patches.PathPatch(mpl_path, facecolor='none', edgecolor=COLOR_BLACK, linewidth=5, 
+                                          linestyle=(0, (3, 3)), capstyle='round', joinstyle='round', zorder=z_order+0.1)
             ax.add_patch(patch_blk)
         elif is_design:
-            patch = patches.PathPatch(mpl_path, facecolor='none', edgecolor=COLOR_RED, linewidth=4, capstyle='round', zorder=z_order)
+            patch = patches.PathPatch(mpl_path, facecolor='none', edgecolor=COLOR_RED, linewidth=5, 
+                                      capstyle='round', joinstyle='round', zorder=z_order)
             ax.add_patch(patch)
         elif is_personality:
-            patch = patches.PathPatch(mpl_path, facecolor='none', edgecolor=COLOR_BLACK, linewidth=4, capstyle='round', zorder=z_order)
+            patch = patches.PathPatch(mpl_path, facecolor='none', edgecolor=COLOR_BLACK, linewidth=5, 
+                                      capstyle='round', joinstyle='round', zorder=z_order)
             ax.add_patch(patch)
 
     # 4. DRAW CENTERS (On top of channels)
@@ -126,32 +165,30 @@ def draw_chart(chart_data, layout_data):
     # Standardize center names to match layout keys
     
     for name, data in centers_layout.items():
-        # Determine if defined
-        # Check mapped name in layout vs JSON
-        json_name = name
-        # Reverse map for checking definition
-        if name == "G":
-            json_name = "G_Center"
+        # Determine if defined - name already matches layout key
+        is_defined = name in defined_centers
         
-        is_defined = json_name in defined_centers or name in defined_centers
-        
-        fill_c = COLOR_DEFINED if is_defined else COLOR_UNDEFINED
-        stroke_c = "gold" if is_defined else "gray" # Matches XAML style roughly
-        if not is_defined:
-            stroke_c = "gray"
+        # Get center-specific color or use undefined white
+        # Premium UI: No borders (edgecolor='none' via linewidth=0)
+        if is_defined:
+            fill_c = CENTER_COLORS.get(name, "#D4AF37")  # Default gold fallback
+            stroke_c = "none"  # No border for premium UI look
         else:
-            stroke_c = "#B8860B" # DarkGoldenRod for better visibility than 'Gold'
+            fill_c = COLOR_UNDEFINED
+            stroke_c = "none"  # No border for undefined centers
         
         z_order = 10
         
         if data['type'] == 'rect':
             # X/Y in XAML Canvas are Top-Left
+            # Premium UI: No borders (linewidth=0)
             rect = patches.Rectangle((data['x'], data['y']), data['w'], data['h'], 
-                                     linewidth=2, edgecolor=stroke_c, facecolor=fill_c, zorder=z_order)
+                                     linewidth=0, edgecolor='none', facecolor=fill_c, zorder=z_order)
             ax.add_patch(rect)
         elif data['type'] == 'path':
             path = svg_to_mpl_path(data['path'])
-            patch = patches.PathPatch(path, facecolor=fill_c, edgecolor=stroke_c, linewidth=2, zorder=z_order)
+            # Premium UI: No borders (linewidth=0)
+            patch = patches.PathPatch(path, facecolor=fill_c, edgecolor='none', linewidth=0, zorder=z_order)
             
             # Apply Transform if present
             transform_str = data.get('transform')
@@ -175,23 +212,31 @@ def draw_chart(chart_data, layout_data):
         gate_id = int(gate_id_str)
         x, y = pt['x'], pt['y']
         
-        # Check if gate is active to highlight? 
+        # Check if gate is active to highlight
         is_active = (gate_id in design_gates) or (gate_id in personality_gates)
         
-        # Circle background for number
-        # XAML Gate Template uses a small Ellipse 6.5x6.5
-        # We'll draw a small circle
-        
-        # Highlight active gates
-        
+        # Premium UI: Active gates get fixed-size white circle + bold black text
+        # Inactive gates get subtle grey text with no background
         if is_active:
-            circ = patches.Circle((x + 3, y + 3), radius=3.5, facecolor='white', edgecolor='purple', linewidth=0.5, alpha=0.8, zorder=20)
-            ax.add_patch(circ)
-        
-        # Text
-        # The XAML coordinates (Canvas.Left/Top) are for the top-left of the button/control.
-        # We want to center the text approx +3, +3
-        ax.text(x + 3.2, y + 4.5, str(gate_id), fontsize=4, ha='center', va='center', zorder=21, color='black', fontfamily='sans-serif')
+            # Active: Draw fixed-size white circle behind text
+            # Calculate center position (gate coordinates are top-left, adjust to center)
+            circle_x = x + 3
+            circle_y = y + 3
+            circle_radius = 4  # Fixed radius for all gates (reduced from 5 for better spacing)
+            
+            # Draw white circle patch
+            circle_patch = patches.Circle((circle_x, circle_y), radius=circle_radius, 
+                                          facecolor='white', edgecolor='none', zorder=20)
+            ax.add_patch(circle_patch)
+            
+            # Draw bold black text centered in the circle (higher zorder to sit on top)
+            ax.text(circle_x, circle_y, str(gate_id), fontsize=8, fontweight='bold', 
+                    ha='center', va='center', zorder=22, color='#000000', fontfamily='sans-serif')
+        else:
+            # Inactive: Smaller grey text, no background
+            # Use same center coordinates for consistency
+            ax.text(x + 3, y + 3, str(gate_id), fontsize=7, 
+                    ha='center', va='center', zorder=21, color='#888888', fontfamily='sans-serif')
 
     # 6. SIDE PANELS (Planets) - Optional but good for completeness
     # Draw simple lists on left/right outside the canvas w/ clipping off? 
