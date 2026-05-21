@@ -27,24 +27,23 @@ def get_solar_return(
     hour: int = Query(11, description="Birth hour"),
     minute: int = Query(0, description="Birth minute (default 0)"),
     second: int = Query(0, description="Birth second (optional, default 0)"),
-    place: str = Query("Kirikkale, Turkey", description="Birth place (city, country)"),
+    place: Optional[str] = Query(None, description="Birth place (used for geocoding only when latitude/longitude are not provided)"),
     sr_year_offset: int = Query(0, description="Years to add to birth year. 0 = Birth Year, 1 = 1st Birthday (1969), 58 = 2026 Birthday."),
     latitude: Optional[float] = Query(None, description="Optional latitude for birth place"),
     longitude: Optional[float] = Query(None, description="Optional longitude for birth place"),
     authorized: bool = Depends(verify_token)
 ):
     # Geocoding and timezone logic
-    if latitude is None or longitude is None:
-        latitude, longitude = get_latitude_longitude(place)
-        
-    if latitude is None or longitude is None:
-        raise HTTPException(status_code=400, detail=f"Geocoding failed for place: '{place}'")
-    
-    if "/" in place:
-        zone = place
-    else:
-        # Use singleton
+    # Strict priority: coordinates first, then text geocoding fallback
+    if latitude is not None and longitude is not None:
         zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+    elif place:
+        latitude, longitude = get_latitude_longitude(place)
+        if latitude is None or longitude is None:
+            raise HTTPException(status_code=400, detail=f"Geocoding failed for place: '{place}'")
+        zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+    else:
+        raise HTTPException(status_code=400, detail="Either coordinates (latitude/longitude) or a place name must be provided.")
     birth_time = (year, month, day, hour, minute, second)
     hours = hd.get_utc_offset_from_tz(birth_time, zone)
     birth_timestamp = tuple(list(birth_time) + [int(hours)])
@@ -86,8 +85,8 @@ def get_daily_transit(
     hour: int = Query(11, description="Birth hour"),
     minute: int = Query(0, description="Birth minute (default 0)"),
     second: int = Query(0, description="Birth second (optional, default 0)"),
-    place: str = Query("Kirikkale, Turkey", description="Birth place (city, country)"),
-    current_place: str = Query(None, description="Current location for transit calculation (optional, defaults to Birth Place)"),
+    place: Optional[str] = Query(None, description="Birth place (used for geocoding only when latitude/longitude are not provided)"),
+    current_place: Optional[str] = Query(None, description="Current location for transit calculation (optional, defaults to Birth Place)"),
     transit_year: int = Query(2025, description="Transit year to analyze"),
     transit_month: int = Query(1, description="Transit month to analyze"),
     transit_day: int = Query(10, description="Transit day to analyze"),
@@ -100,19 +99,17 @@ def get_daily_transit(
     authorized: bool = Depends(verify_token)
 ):
     # 1. Process Birth Data (remains constant)
-    if latitude is None or longitude is None:
-        b_lat, b_lon = get_latitude_longitude(place)
-    else:
+    # Strict priority: coordinates first, then text geocoding fallback
+    if latitude is not None and longitude is not None:
         b_lat, b_lon = latitude, longitude
-        
-    if b_lat is None or b_lon is None:
-        raise HTTPException(status_code=400, detail=f"Geocoding failed for birth place: '{place}'")
-    
-    if "/" in place:
-        b_zone = place
-    else:
-        # Use singleton
         b_zone = tf.timezone_at(lat=b_lat, lng=b_lon) or 'Etc/UTC'
+    elif place:
+        b_lat, b_lon = get_latitude_longitude(place)
+        if b_lat is None or b_lon is None:
+            raise HTTPException(status_code=400, detail=f"Geocoding failed for birth place: '{place}'")
+        b_zone = tf.timezone_at(lat=b_lat, lng=b_lon) or 'Etc/UTC'
+    else:
+        raise HTTPException(status_code=400, detail="Either coordinates (latitude/longitude) or a place name must be provided.")
     
     birth_time = (year, month, day, hour, minute, second)
     b_offset_hours = hd.get_utc_offset_from_tz(birth_time, b_zone)
@@ -123,18 +120,14 @@ def get_daily_transit(
     
     if current_place:
         # Geocode current place
-        if current_latitude is None or current_longitude is None:
-            c_lat, c_lon = get_latitude_longitude(calculation_place)
-        else:
+        # Strict priority: coordinates first, then text geocoding fallback
+        if current_latitude is not None and current_longitude is not None:
             c_lat, c_lon = current_latitude, current_longitude
-            
-        if c_lat is None or c_lon is None:
-             raise HTTPException(status_code=400, detail=f"Geocoding failed for current place: '{calculation_place}'")
-        
-        if "/" in calculation_place:
-            c_zone = calculation_place
+            c_zone = tf.timezone_at(lat=c_lat, lng=c_lon) or 'Etc/UTC'
         else:
-            # Use singleton
+            c_lat, c_lon = get_latitude_longitude(calculation_place)
+            if c_lat is None or c_lon is None:
+                raise HTTPException(status_code=400, detail=f"Geocoding failed for current place: '{calculation_place}'")
             c_zone = tf.timezone_at(lat=c_lat, lng=c_lon) or 'Etc/UTC'
     else:
         # Re-use birth place info

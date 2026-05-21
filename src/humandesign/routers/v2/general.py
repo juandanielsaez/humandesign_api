@@ -31,21 +31,29 @@ def calculate_hd_v2(
     birth_time = (request.year, request.month, request.day, request.hour, request.minute, request.second)
 
     # 2. Geocode and timezone
+    # Strict priority: coordinates first, then text geocoding fallback
     try:
         latitude, longitude = request.latitude, request.longitude
-        # If coordinates are None or default (0,0), and we have a place name, trigger geocoding
-        if (latitude is None or longitude is None) or (latitude == 0.0 and longitude == 0.0):
-            latitude, longitude = get_latitude_longitude(request.place)
-            
+        
+        # PRIORITY 1: Use provided coordinates directly (bypass geocoding entirely)
         if latitude is not None and longitude is not None:
-            if "/" in request.place:
-                zone = request.place
-            else:
+            zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+        
+        # PRIORITY 2: Fall back to text geocoding if no coordinates provided
+        elif request.place:
+            latitude, longitude = get_latitude_longitude(request.place)
+            if latitude is not None and longitude is not None:
                 zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+            else:
+                raise HTTPException(status_code=400, detail=f"Geocoding failed for place: '{request.place}'")
+        
+        # No coordinates and no place string
         else:
-            raise HTTPException(status_code=400, detail=f"Geocoding failed for place: '{request.place}'")
+            raise HTTPException(status_code=400, detail="Either coordinates (latitude/longitude) or a place name must be provided.")
             
         hours = hd.get_utc_offset_from_tz(birth_time, zone)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error determining timezone or offset: {str(e)}")
 

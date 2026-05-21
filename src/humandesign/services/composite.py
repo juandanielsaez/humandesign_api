@@ -385,23 +385,21 @@ def process_person_data(name, data):
         hour = data["hour"]
         minute = data["minute"]
         
-        # Geocode Bypass
-        # Check if lat/long are provided in input data
+        # Geocode: strict coordinate priority
         latitude = data.get("latitude")
         longitude = data.get("longitude")
         
-        if latitude is None or longitude is None:
-             latitude, longitude = get_latitude_longitude(place)
-             
-        if latitude is None or longitude is None:
-            raise ValueError(f"Could not geocode place: {place}")
-
-        # Timezone
-        if "/" in place:
-            zone = place
-        else:
-            # Use singleton tf from geolocation
+        # PRIORITY 1: Use provided coordinates directly
+        if latitude is not None and longitude is not None:
             zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+        # PRIORITY 2: Fall back to text geocoding
+        elif place:
+            latitude, longitude = get_latitude_longitude(place)
+            if latitude is None or longitude is None:
+                raise ValueError(f"Could not geocode place: {place}")
+            zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+        else:
+            raise ValueError("Either coordinates (latitude/longitude) or a place name must be provided.")
         
         # Calculate UTC offset
         birth_time = (year, month, day, hour, minute, 0) # seconds default 0

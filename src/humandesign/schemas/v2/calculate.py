@@ -18,7 +18,7 @@ class CalculateRequestV2(BaseModel):
     hour: int = Field(11, description="Birth hour")
     minute: int = Field(0, description="Birth minute")
     second: int = Field(0, description="Birth second")
-    place: str = Field("Kirikkale, Turkey", description="Birth place")
+    place: Optional[str] = Field(None, description="Birth place (used for geocoding only when latitude/longitude are not provided)")
     gender: Optional[str] = Field("male", description="Gender")
     islive: Optional[bool] = Field(True, description="Whether alive")
     latitude: Optional[float] = None

@@ -123,15 +123,17 @@ def analyze_composite(
     # Process inputs (Geocode & Timezone)
     for name, p_input in inputs.items():
         try:
-            latitude, longitude = get_latitude_longitude(p_input.place)
-            if latitude is None or longitude is None:
-                 raise HTTPException(status_code=400, detail=f"Geocoding failed for {name} place: '{p_input.place}'")
-            
-            if "/" in p_input.place:
-                zone = p_input.place
-            else:
-                # Use singleton
+            # Strict priority: coordinates first, then text geocoding fallback
+            if p_input.latitude is not None and p_input.longitude is not None:
+                latitude, longitude = p_input.latitude, p_input.longitude
                 zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+            elif p_input.place:
+                latitude, longitude = get_latitude_longitude(p_input.place)
+                if latitude is None or longitude is None:
+                    raise HTTPException(status_code=400, detail=f"Geocoding failed for {name} place: '{p_input.place}'")
+                zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+            else:
+                raise HTTPException(status_code=400, detail=f"Either coordinates or a place name must be provided for {name}.")
             
             birth_time = (p_input.year, p_input.month, p_input.day, p_input.hour, p_input.minute, 0)
             hours = hd.get_utc_offset_from_tz(birth_time, zone)
@@ -230,19 +232,17 @@ def analyze_penta(
     for name, p_input in inputs.items():
         try:
             # Geocoding & Timezone
+            # Strict priority: coordinates first, then text geocoding fallback
             if p_input.latitude is not None and p_input.longitude is not None:
                 latitude, longitude = p_input.latitude, p_input.longitude
-            else:
-                latitude, longitude = get_latitude_longitude(p_input.place)
-                
-            if latitude is None or longitude is None:
-                 raise HTTPException(status_code=400, detail=f"Geocoding failed for {name} place: '{p_input.place}'")
-            
-            if "/" in p_input.place:
-                zone = p_input.place
-            else:
-                # Use singleton
                 zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+            elif p_input.place:
+                latitude, longitude = get_latitude_longitude(p_input.place)
+                if latitude is None or longitude is None:
+                    raise HTTPException(status_code=400, detail=f"Geocoding failed for {name} place: '{p_input.place}'")
+                zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+            else:
+                raise HTTPException(status_code=400, detail=f"Either coordinates or a place name must be provided for {name}.")
             
             birth_time = (p_input.year, p_input.month, p_input.day, p_input.hour, p_input.minute, 0)
             hours = hd.get_utc_offset_from_tz(birth_time, zone)

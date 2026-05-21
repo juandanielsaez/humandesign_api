@@ -48,7 +48,7 @@ def calculate_hd(
     hour: int = Query(11, description="Birth hour"),
     minute: int = Query(0, description="Birth minute"),
     second: int = Query(0, description="Birth second (optional, default 0)"),
-    place: str = Query("Kirikkale, Turkey", description="Birth place (city, country)"),
+    place: Optional[str] = Query(None, description="Birth place (used for geocoding only when latitude/longitude are not provided)"),
     gender: str = Query("male", description="Gender (optional)"),
     islive: bool = Query(True, description="Whether the person is still alive (True) or deceased (False)"),
     latitude: Optional[float] = Query(None, description="Optional latitude for birth place"),
@@ -59,20 +59,27 @@ def calculate_hd(
     birth_time = (year, month, day, hour, minute, second)
 
     # 2. Geocode and timezone
+    # Strict priority: coordinates first, then text geocoding fallback
     try:
-        # Use provided coordinates if available, otherwise geocode
-        if latitude is None or longitude is None:
-            latitude, longitude = get_latitude_longitude(place)
-            
+        # PRIORITY 1: Use provided coordinates directly (bypass geocoding entirely)
         if latitude is not None and longitude is not None:
-            if "/" in place:
-                zone = place
-            else:
-                # Use singleton
+            zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+        
+        # PRIORITY 2: Fall back to text geocoding if no coordinates provided
+        elif place:
+            latitude, longitude = get_latitude_longitude(place)
+            if latitude is not None and longitude is not None:
                 zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+            else:
+                raise HTTPException(status_code=400, detail=f"Geocoding failed for place: '{place}'. Please check the place name or try a different format.")
+        
+        # No coordinates and no place string
         else:
-            raise HTTPException(status_code=400, detail=f"Geocoding failed for place: '{place}'. Please check the place name or try a different format.")
+            raise HTTPException(status_code=400, detail="Either coordinates (latitude/longitude) or a place name must be provided.")
+        
         hours = hd.get_utc_offset_from_tz(birth_time, zone)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error determining timezone or offset: {str(e)}")
 
@@ -141,7 +148,7 @@ def get_bodygraph_image(
     hour: int = Query(11, description="Birth hour"),
     minute: int = Query(0, description="Birth minute"),
     second: int = Query(0, description="Birth second (optional, default 0)"),
-    place: str = Query("Kirikkale, Turkey", description="Birth place (city, country)"),
+    place: Optional[str] = Query(None, description="Birth place (used for geocoding only when latitude/longitude are not provided)"),
     fmt: str = Query("png", description="Image format: png, svg, jpg/jpeg"),
     latitude: Optional[float] = Query(None, description="Optional latitude for birth place"),
     longitude: Optional[float] = Query(None, description="Optional longitude for birth place"),
@@ -151,19 +158,27 @@ def get_bodygraph_image(
     birth_time = (year, month, day, hour, minute, second)
 
     # 2. Geocode and timezone
+    # Strict priority: coordinates first, then text geocoding fallback
     try:
-        # Use provided coordinates if available, otherwise geocode
-        if latitude is None or longitude is None:
-            latitude, longitude = get_latitude_longitude(place)
-            
+        # PRIORITY 1: Use provided coordinates directly (bypass geocoding entirely)
         if latitude is not None and longitude is not None:
-            # Use singleton
-            zone = tf.timezone_at(lat=latitude, lng=longitude)
-            if not zone:
-                zone = 'Etc/UTC'
+            zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+        
+        # PRIORITY 2: Fall back to text geocoding if no coordinates provided
+        elif place:
+            latitude, longitude = get_latitude_longitude(place)
+            if latitude is not None and longitude is not None:
+                zone = tf.timezone_at(lat=latitude, lng=longitude) or 'Etc/UTC'
+            else:
+                raise HTTPException(status_code=400, detail=f"Geocoding failed for place: '{place}'. Please check the place name or try a different format.")
+        
+        # No coordinates and no place string
         else:
-            raise HTTPException(status_code=400, detail=f"Geocoding failed for place: '{place}'. Please check the place name or try a different format.")
+            raise HTTPException(status_code=400, detail="Either coordinates (latitude/longitude) or a place name must be provided.")
+        
         hours = hd.get_utc_offset_from_tz(birth_time, zone)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error determining timezone or offset: {str(e)}")
 

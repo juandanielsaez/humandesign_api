@@ -36,10 +36,6 @@ def get_latitude_longitude(place: str) -> Tuple[Optional[float], Optional[float]
     Returns:
         Tuple[float, float]: Latitude and Longitude, or (None, None) if not found.
     """
-    # Bypass for timezone names to avoid network calls in tests or when TZ is known
-    if "/" in place:
-        return 0.0, 0.0 # Return placeholder coordinates
-        
     geolocator = Nominatim(user_agent="geocoding_api")
     try:
         location = geolocator.geocode(place, timeout=2) # Shorter timeout

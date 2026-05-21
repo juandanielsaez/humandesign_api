@@ -48,3 +48,5 @@ htmlcov/
 
 # reports
 reports/
+test_fix.py
+test_local.py
