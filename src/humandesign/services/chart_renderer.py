@@ -80,116 +80,44 @@ def svg_to_mpl_path(svg_d):
 
 def get_parallel_offset_path(path, offset_distance):
     """
-    Creates a parallel offset path by shifting vertices perpendicular to the path direction.
-    
-    For each segment, computes the normal vector and offsets all points (vertices and control points)
-    by the specified distance. Works with Lines (LINETO), Cubic Bezier (CURVE4), and Quadratic Bezier (CURVE3).
-    
+    Creates a parallel offset path by applying a uniform perpendicular translation
+    to every vertex in the path (start, control points, and end points alike).
+
+    The translation direction is the perpendicular of the overall path chord
+    (first vertex → last vertex), so both the red and black lines stay truly
+    parallel along their entire length — no tapering or converging.
+
     Args:
         path: A matplotlib.path.Path object
-        offset_distance: Distance to offset (positive = right side when walking along path)
-    
+        offset_distance: Signed distance to offset (positive = right side when
+                         walking along the chord from first to last vertex)
+
     Returns:
-        A new matplotlib.path.Path with offset vertices
+        A new matplotlib.path.Path with uniformly translated vertices
     """
     if path is None or len(path.vertices) < 2:
         return path
-    
-    vertices = path.vertices.copy()
-    codes = path.codes.copy() if path.codes is not None else np.full(len(vertices), Path.LINETO)
-    
-    # Ensure first point is MOVETO
-    if len(codes) > 0:
-        codes[0] = Path.MOVETO
-    
-    # Compute offset for each vertex based on the local path direction
+
+    vertices = path.vertices
+    codes = path.codes
+
+    # Overall chord direction (first → last vertex)
+    dx = vertices[-1, 0] - vertices[0, 0]
+    dy = vertices[-1, 1] - vertices[0, 1]
+    length = np.sqrt(dx * dx + dy * dy)
+
+    if length == 0:
+        return path
+
+    # Perpendicular unit normal (90° clockwise)
+    nx = (dy / length) * offset_distance
+    ny = (-dx / length) * offset_distance
+
+    # Translate every vertex uniformly
     offset_vertices = vertices.copy()
-    
-    i = 0
-    while i < len(vertices):
-        code = codes[i]
-        
-        if code == Path.MOVETO:
-            # MOVETO: offset based on the direction to the next point
-            if i + 1 < len(vertices):
-                dx = vertices[i + 1, 0] - vertices[i, 0]
-                dy = vertices[i + 1, 1] - vertices[i, 1]
-                length = np.sqrt(dx * dx + dy * dy)
-                if length > 0:
-                    # Perpendicular normal (rotated 90° clockwise for positive offset)
-                    nx = dy / length * offset_distance
-                    ny = -dx / length * offset_distance
-                    offset_vertices[i, 0] = vertices[i, 0] + nx
-                    offset_vertices[i, 1] = vertices[i, 1] + ny
-            i += 1
-            
-        elif code == Path.LINETO:
-            # LINETO: offset based on direction from previous to current
-            if i > 0:
-                dx = vertices[i, 0] - vertices[i - 1, 0]
-                dy = vertices[i, 1] - vertices[i - 1, 1]
-                length = np.sqrt(dx * dx + dy * dy)
-                if length > 0:
-                    nx = dy / length * offset_distance
-                    ny = -dx / length * offset_distance
-                    offset_vertices[i, 0] = vertices[i, 0] + nx
-                    offset_vertices[i, 1] = vertices[i, 1] + ny
-            i += 1
-            
-        elif code == Path.CURVE4:
-            # Cubic Bezier: 3 control points + 1 end point (4 vertices total)
-            if i + 3 < len(vertices):
-                # Get segment start (either MOVETO point or previous segment end)
-                if i > 0:
-                    start_x, start_y = vertices[i - 1]
-                else:
-                    start_x, start_y = vertices[i]
-                
-                # Compute direction from start to end for normal estimation
-                end_x, end_y = vertices[i + 3]
-                dx = end_x - start_x
-                dy = end_y - start_y
-                length = np.sqrt(dx * dx + dy * dy)
-                
-                if length > 0:
-                    nx = dy / length * offset_distance
-                    ny = -dx / length * offset_distance
-                    
-                    # Offset all 4 points of the curve
-                    for j in range(4):
-                        offset_vertices[i + j, 0] = vertices[i + j, 0] + nx
-                        offset_vertices[i + j, 1] = vertices[i + j, 1] + ny
-            i += 4
-            
-        elif code == Path.CURVE3:
-            # Quadratic Bezier: 2 control points + 1 end point (3 vertices total)
-            if i + 2 < len(vertices):
-                # Get segment start
-                if i > 0:
-                    start_x, start_y = vertices[i - 1]
-                else:
-                    start_x, start_y = vertices[i]
-                
-                # Compute direction from start to end
-                end_x, end_y = vertices[i + 2]
-                dx = end_x - start_x
-                dy = end_y - start_y
-                length = np.sqrt(dx * dx + dy * dy)
-                
-                if length > 0:
-                    nx = dy / length * offset_distance
-                    ny = -dx / length * offset_distance
-                    
-                    # Offset all 3 points of the curve
-                    for j in range(3):
-                        offset_vertices[i + j, 0] = vertices[i + j, 0] + nx
-                        offset_vertices[i + j, 1] = vertices[i + j, 1] + ny
-            i += 3
-            
-        else:
-            # For other codes, copy vertex as-is and advance
-            i += 1
-    
+    offset_vertices[:, 0] += nx
+    offset_vertices[:, 1] += ny
+
     return Path(offset_vertices, codes)
 
 
