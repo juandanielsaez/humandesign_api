@@ -3,6 +3,7 @@ import { useHDChart } from "../../hooks/useHDChart";
 import type { CalculateRequestV2 } from "../../types/hdchart";
 import GatesSidebar from "./GatesSidebar";
 import BodyGraphPlaceholder from "./BodyGraphPlaceholder";
+import VariableArrows from "./VariableArrows";
 
 // ── Props ──────────────────────────────────────────────────────────────────
 export interface HDChartProProps {
@@ -24,7 +25,7 @@ export default function HDChartPro({ request, token }: HDChartProProps) {
   }, [request, token, fetchChart]);
 
   return (
-    <div className="min-h-screen bg-white text-gray-800 p-4 md:p-8">
+    <div className="min-h-screen bg-white text-gray-800 p-4 md:p-8 max-w-3xl mx-auto">
       {/* ── Loading state ─────────────────────────────────────────────────── */}
       {loading && (
         <div className="flex items-center justify-center py-20">
@@ -41,19 +42,26 @@ export default function HDChartPro({ request, token }: HDChartProProps) {
 
       {/* ── 3-column grid: Design | BodyGraph | Personality ───────────────── */}
       {data && !loading && (
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(120px,160px)_1fr_minmax(120px,160px)] gap-0 lg:gap-2 items-start max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-[min-content_auto_min-content] gap-0 items-stretch justify-center">
           {/* Left — Design (unconscious, red) */}
           <GatesSidebar side="design" gates={data.gates?.design} />
 
-          {/* Center — BodyGraph image */}
-          {bodygraphSvg ? (
-            <div
-              className="w-full flex items-start justify-center [&>svg]:w-full [&>svg]:h-auto [&>svg]:max-h-[80vh]"
-              dangerouslySetInnerHTML={{ __html: bodygraphSvg }}
-            />
-          ) : (
-            <BodyGraphPlaceholder />
-          )}
+          {/* Center — BodyGraph image with variable arrows overlay */}
+          <div className="relative mx-auto w-fit">
+            {bodygraphSvg ? (
+              <div
+                className="w-full flex items-start justify-center [&>svg]:w-full [&>svg]:h-auto [&>svg]:max-h-[80vh]"
+                dangerouslySetInnerHTML={{ __html: bodygraphSvg }}
+              />
+            ) : (
+              <BodyGraphPlaceholder />
+            )}
+
+            {/* Variable arrows overlaid on the bodygraph */}
+            {data.variables && (
+              <VariableArrows variables={data.variables} />
+            )}
+          </div>
 
           {/* Right — Personality (conscious, dark) */}
           <GatesSidebar side="personality" gates={data.gates?.personality} />
