@@ -9,6 +9,7 @@ const API_BASE_URL =
 
 interface UseHDChartReturn {
   data: CalculateResponseV2 | null;
+  bodygraphSvg: string | null;
   loading: boolean;
   error: string | null;
   fetchChart: (params: CalculateRequestV2, token: string) => Promise<void>;
@@ -16,6 +17,7 @@ interface UseHDChartReturn {
 
 export function useHDChart(): UseHDChartReturn {
   const [data, setData] = useState<CalculateResponseV2 | null>(null);
+  const [bodygraphSvg, setBodygraphSvg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,22 +27,44 @@ export function useHDChart(): UseHDChartReturn {
       setError(null);
 
       try {
-        const res = await fetch(`${API_BASE_URL}/v2/calculate`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(params),
+        // Build query string for /bodygraph GET endpoint
+        const qs = new URLSearchParams({
+          year: String(params.year),
+          month: String(params.month),
+          day: String(params.day),
+          hour: String(params.hour),
+          minute: String(params.minute),
+          second: String(params.second ?? 0),
+          place: params.place,
+          fmt: "svg",
         });
 
-        if (!res.ok) {
-          const errBody = await res.text();
-          throw new Error(`API ${res.status}: ${errBody}`);
+        const authHeaders = { Authorization: `Bearer ${token}` };
+
+        // Fire both requests in parallel
+        const [calcRes, bgRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/v2/calculate`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders },
+            body: JSON.stringify(params),
+          }),
+          fetch(`${API_BASE_URL}/bodygraph?${qs.toString()}`, {
+            headers: authHeaders,
+          }),
+        ]);
+
+        if (!calcRes.ok) {
+          const errBody = await calcRes.text();
+          throw new Error(`API ${calcRes.status}: ${errBody}`);
         }
 
-        const json: CalculateResponseV2 = await res.json();
+        const json: CalculateResponseV2 = await calcRes.json();
         setData(json);
+
+        if (bgRes.ok) {
+          const svgText = await bgRes.text();
+          setBodygraphSvg(svgText);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
@@ -50,5 +74,5 @@ export function useHDChart(): UseHDChartReturn {
     [],
   );
 
-  return { data, loading, error, fetchChart };
+  return { data, bodygraphSvg, loading, error, fetchChart };
 }

@@ -17,12 +17,12 @@ export default function App() {
 
   if (!submitted) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="w-full max-w-md space-y-4">
-          <h1 className="text-2xl font-bold text-gray-100 text-center">
+          <h1 className="text-2xl font-bold text-gray-800 text-center">
             HD Chart Pro
           </h1>
-          <p className="text-sm text-gray-400 text-center">
+          <p className="text-sm text-gray-500 text-center">
             Enter your API bearer token to load the chart.
           </p>
           <input
@@ -30,12 +30,12 @@ export default function App() {
             placeholder="Bearer token"
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            className="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg bg-white border border-gray-300 text-gray-800 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
           <button
             onClick={() => setSubmitted(true)}
             disabled={!token.trim()}
-            className="w-full rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-semibold py-2 transition-colors"
+            className="w-full rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-40 text-white font-semibold py-2 transition-colors"
           >
             Load Chart
           </button>

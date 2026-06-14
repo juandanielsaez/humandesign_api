@@ -16,75 +16,47 @@ export interface HDChartProProps {
 
 // ── Component ──────────────────────────────────────────────────────────────
 export default function HDChartPro({ request, token }: HDChartProProps) {
-  const { data, loading, error, fetchChart } = useHDChart();
+  const { data, bodygraphSvg, loading, error, fetchChart } = useHDChart();
 
   // Fetch on mount & whenever the request payload changes
   useEffect(() => {
     fetchChart(request, token);
   }, [request, token, fetchChart]);
 
-  // ── Derived data ─────────────────────────────────────────────────────────
-  const general = data?.general;
-  const variables = data?.variables;
-
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 p-4 md:p-8">
-      {/* ── Header strip ──────────────────────────────────────────────────── */}
-      {general && (
-        <header className="mb-6 text-center space-y-1">
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-            {general.energy_type}{" "}
-            <span className="text-indigo-400">— {general.profile}</span>
-          </h1>
-          <p className="text-sm text-gray-400">
-            {general.strategy} · {general.inner_authority} ·{" "}
-            {general.definition}
-          </p>
-          <p className="text-xs text-gray-500">
-            {general.inc_cross}
-          </p>
-          {variables && (
-            <p className="text-xs font-mono text-gray-500">
-              Variable: {variables.short_code}
-            </p>
-          )}
-        </header>
-      )}
-
-      {/* ── Loading / Error states ────────────────────────────────────────── */}
+    <div className="min-h-screen bg-white text-gray-800 p-4 md:p-8">
+      {/* ── Loading state ─────────────────────────────────────────────────── */}
       {loading && (
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full" />
+          <div className="animate-spin h-10 w-10 border-4 border-gray-300 border-t-gray-600 rounded-full" />
         </div>
       )}
 
-      {error && (
-        <div className="mx-auto max-w-lg rounded-xl bg-red-900/40 border border-red-600 p-4 text-sm text-red-200 mb-6">
+      {/* ── Error state (hidden once data arrives) ────────────────────────── */}
+      {error && !data && (
+        <div className="mx-auto max-w-lg rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700 mb-6">
           <strong>Error:</strong> {error}
         </div>
       )}
 
       {/* ── 3-column grid: Design | BodyGraph | Personality ───────────────── */}
       {data && !loading && (
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(220px,1fr)_2fr_minmax(220px,1fr)] gap-4 lg:gap-6">
-          {/* Left — Design (unconscious) */}
-          <GatesSidebar
-            title="Design"
-            subtitle="Unconscious · Body"
-            accentColor="border-red-500"
-            gates={data.gates?.design}
-          />
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(120px,160px)_1fr_minmax(120px,160px)] gap-0 lg:gap-2 items-start max-w-5xl mx-auto">
+          {/* Left — Design (unconscious, red) */}
+          <GatesSidebar side="design" gates={data.gates?.design} />
 
-          {/* Center — BodyGraph SVG placeholder */}
-          <BodyGraphPlaceholder />
+          {/* Center — BodyGraph image */}
+          {bodygraphSvg ? (
+            <div
+              className="w-full flex items-start justify-center [&>svg]:w-full [&>svg]:h-auto [&>svg]:max-h-[80vh]"
+              dangerouslySetInnerHTML={{ __html: bodygraphSvg }}
+            />
+          ) : (
+            <BodyGraphPlaceholder />
+          )}
 
-          {/* Right — Personality (conscious) */}
-          <GatesSidebar
-            title="Personality"
-            subtitle="Conscious · Mind"
-            accentColor="border-indigo-500"
-            gates={data.gates?.personality}
-          />
+          {/* Right — Personality (conscious, dark) */}
+          <GatesSidebar side="personality" gates={data.gates?.personality} />
         </div>
       )}
     </div>

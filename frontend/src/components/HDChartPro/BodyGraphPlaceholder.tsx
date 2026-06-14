@@ -1,10 +1,10 @@
 export default function BodyGraphPlaceholder() {
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[400px] rounded-2xl border-2 border-dashed border-gray-600 bg-gray-900/40 backdrop-blur-md">
+    <div className="flex flex-col items-center justify-center h-full min-h-[400px] rounded-lg border border-dashed border-gray-300 bg-gray-50">
       {/* Decorative glyph */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="w-24 h-24 text-gray-600 mb-4"
+        className="w-24 h-24 text-gray-300 mb-4"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -23,10 +23,10 @@ export default function BodyGraphPlaceholder() {
         <line x1="13.5" y1="11" x2="16.5" y2="9.8" />
       </svg>
 
-      <p className="text-gray-500 font-semibold text-sm uppercase tracking-widest">
+      <p className="text-gray-400 font-semibold text-sm uppercase tracking-widest">
         BodyGraph SVG
       </p>
-      <p className="text-gray-600 text-xs mt-1">
+      <p className="text-gray-400 text-xs mt-1">
         Placeholder — connect your SVG renderer here
       </p>
     </div>

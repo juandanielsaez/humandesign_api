@@ -2,9 +2,7 @@ import type { GateV2 } from "../../types/hdchart";
 import GatePlanetRow from "./GatePlanetRow";
 
 interface GatesSidebarProps {
-  title: string;
-  subtitle: string;
-  accentColor: string;       // Tailwind border-color class, e.g. "border-red-500"
+  side: "design" | "personality";
   gates: Record<string, GateV2> | undefined;
 }
 
@@ -24,12 +22,7 @@ const PLANET_ORDER = [
   "Pluto",
 ];
 
-export default function GatesSidebar({
-  title,
-  subtitle,
-  accentColor,
-  gates,
-}: GatesSidebarProps) {
+export default function GatesSidebar({ side, gates }: GatesSidebarProps) {
   const sorted = gates
     ? PLANET_ORDER.filter((p) => p in gates).map((p) => ({
         planet: p,
@@ -37,36 +30,29 @@ export default function GatesSidebar({
       }))
     : [];
 
-  return (
-    <section
-      className={`rounded-2xl border-2 ${accentColor} bg-gray-900/60 backdrop-blur-md p-4 flex flex-col`}
-    >
-      {/* Header */}
-      <h2 className="text-lg font-bold tracking-wide uppercase">{title}</h2>
-      <p className="text-xs text-gray-400 mb-3">{subtitle}</p>
+  if (sorted.length === 0) return null;
 
-      {/* Gate table */}
-      {sorted.length === 0 ? (
-        <p className="text-sm text-gray-500 italic">No gate data loaded.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="text-gray-400 text-xs uppercase border-b border-white/10">
-                <th className="pb-1 pr-2">☆</th>
-                <th className="pb-1 px-2">Gate</th>
-                <th className="pb-1 px-2">Line</th>
-                <th className="pb-1 px-2">C/T/B</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map(({ planet, gate }) => (
-                <GatePlanetRow key={planet} planet={planet} gate={gate} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
+  const isDesign = side === "design";
+
+  return (
+    <div className="flex flex-col py-2">
+      {/* Column header */}
+      <h2
+        className={`text-xs font-bold uppercase tracking-widest pb-1 mb-2 ${
+          isDesign
+            ? "text-red-500 border-b-2 border-red-500 text-right"
+            : "text-gray-800 border-b-2 border-gray-800 text-left"
+        }`}
+      >
+        {isDesign ? "Design" : "Personality"}
+      </h2>
+
+      {/* Planet rows */}
+      <div className="flex flex-col gap-px px-1">
+        {sorted.map(({ planet, gate }) => (
+          <GatePlanetRow key={planet} planet={planet} gate={gate} side={side} />
+        ))}
+      </div>
+    </div>
   );
 }
