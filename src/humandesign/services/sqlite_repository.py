@@ -10,11 +10,16 @@
 
 import sqlite3
 import os
+from pathlib import Path
 from typing import Dict, Any
+
+# Resolve DB path relative to the project root (3 levels up from this file)
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+_DEFAULT_DB_PATH = str(_PROJECT_ROOT / "hd_data.sqlite")
 
 class SQLiteRepository:
     _instance = None
-    _db_path = "hd_data.sqlite"
+    _db_path = _DEFAULT_DB_PATH
 
     def __new__(cls):
         if cls._instance is None:
