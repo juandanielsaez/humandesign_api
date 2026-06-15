@@ -13,9 +13,27 @@ import os
 from pathlib import Path
 from typing import Dict, Any
 
-# Resolve DB path relative to the project root (3 levels up from this file)
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-_DEFAULT_DB_PATH = str(_PROJECT_ROOT / "hd_data.sqlite")
+# Resolve DB path dynamically: check CWD first (works in Docker/Railway where
+# WORKDIR=/app and the .sqlite is copied there), then fall back to navigating
+# relative to this file (works in local dev when running from the project root).
+def _find_db_path() -> str:
+    db_name = "hd_data.sqlite"
+    # 1. Environment variable override
+    env_path = os.environ.get("HD_DATA_SQLITE_PATH")
+    if env_path and os.path.exists(env_path):
+        return env_path
+    # 2. Current working directory
+    cwd_path = Path.cwd() / db_name
+    if cwd_path.exists():
+        return str(cwd_path)
+    # 3. Relative to this file (4 levels up = project root in source tree)
+    source_path = Path(__file__).resolve().parent.parent.parent.parent / db_name
+    if source_path.exists():
+        return str(source_path)
+    # 4. Fallback: return CWD-based path (will raise FileNotFoundError on connect)
+    return str(cwd_path)
+
+_DEFAULT_DB_PATH = _find_db_path()
 
 class SQLiteRepository:
     _instance = None
